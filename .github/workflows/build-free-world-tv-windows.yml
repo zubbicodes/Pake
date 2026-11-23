@@ -1,0 +1,52 @@
+name: Build Free World TV (Windows)
+
+# Packages https://mlwbd-newsite.blogspot.com/ into a Windows .msi called
+# "Free World TV", with the ad/pop-up blocker in apps/free-world-tv/adblock.js.
+# Run it from the Actions tab, or it runs when this file or the blocker changes.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/build-free-world-tv-windows.yml
+      - apps/free-world-tv/**
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js Environment
+        uses: ./.github/actions/setup-env
+        with:
+          mode: build
+
+      - name: Build CLI
+        run: pnpm run cli:build
+
+      - name: Build App
+        timeout-minutes: 30
+        shell: pwsh
+        run: |
+          node dist/cli.js "https://mlwbd-newsite.blogspot.com/" `
+            --name "Free World TV" `
+            --width 1280 --height 800 `
+            --app-version 1.0.1 `
+            --inject ./apps/free-world-tv/adblock.js
+          git checkout -- src-tauri/Cargo.lock
+          Get-ChildItem *.msi
+
+      - name: Upload MSI
+        uses: actions/upload-artifact@v6
+        with:
+          name: Free-World-TV-Windows
+          path: "*.msi"
+          retention-days: 30
+          if-no-files-found: error
