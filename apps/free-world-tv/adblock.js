@@ -10,21 +10,64 @@
   window.__FWTV_ADBLOCK__ = true;
 
   var AD_PATTERNS = [
-    "al5sm.com", "tag.min.js", "monetag", "popads", "popcash", "adnxs",
-    "doubleclick", "googlesyndication", "adservice", "pagead2", "propellerads",
-    "adsterra", "hilltopads", "trafficjunky", "exoclick", "juicyads", "adcash",
-    "revcontent", "mgid", "taboola", "outbrain", "popunder", "clickadu",
-    "adfly", "adf.ly", "shorte.st", "ouo.io", "bc.vc", "linkvertise",
-    "admaven", "popcornads", "popnads", "onclicka", "onclckads",
-    "highperformanceformat", "effectivecpm", "profitablecpm", "profitableratecpm",
-    "displayvertising", "a-ads", "bidgear", "adskeeper", "galaksion",
-    "richpartners", "pushame", "notix", "realsrv", "tsyndicate"
+    "al5sm.com",
+    "tag.min.js",
+    "monetag",
+    "popads",
+    "popcash",
+    "adnxs",
+    "doubleclick",
+    "googlesyndication",
+    "adservice",
+    "pagead2",
+    "propellerads",
+    "adsterra",
+    "hilltopads",
+    "trafficjunky",
+    "exoclick",
+    "juicyads",
+    "adcash",
+    "revcontent",
+    "mgid",
+    "taboola",
+    "outbrain",
+    "popunder",
+    "clickadu",
+    "adfly",
+    "adf.ly",
+    "shorte.st",
+    "ouo.io",
+    "bc.vc",
+    "linkvertise",
+    "admaven",
+    "popcornads",
+    "popnads",
+    "onclicka",
+    "onclckads",
+    "highperformanceformat",
+    "effectivecpm",
+    "profitablecpm",
+    "profitableratecpm",
+    "displayvertising",
+    "a-ads",
+    "bidgear",
+    "adskeeper",
+    "galaksion",
+    "richpartners",
+    "pushame",
+    "notix",
+    "realsrv",
+    "tsyndicate",
   ];
 
   // Outside sites that may still open in the browser when clicked.
   var ALLOW_EXTERNAL = [
-    "twitter.com", "x.com", "api.whatsapp.com", "wa.me",
-    "youtube.com", "youtu.be"
+    "twitter.com",
+    "x.com",
+    "api.whatsapp.com",
+    "wa.me",
+    "youtube.com",
+    "youtu.be",
   ];
 
   function hostOf(raw) {
@@ -42,12 +85,16 @@
   function isAd(raw) {
     if (!raw) return false;
     var s = String(raw).toLowerCase();
-    return AD_PATTERNS.some(function (p) { return s.indexOf(p) !== -1; });
+    return AD_PATTERNS.some(function (p) {
+      return s.indexOf(p) !== -1;
+    });
   }
   var homeHost = (function () {
     try {
       var cfg = window.pakeConfig || {};
-      return new URL(cfg.url || window.top.location.href).hostname.toLowerCase();
+      return new URL(
+        cfg.url || window.top.location.href,
+      ).hostname.toLowerCase();
     } catch (e) {
       return "mlwbd-newsite.blogspot.com";
     }
@@ -56,7 +103,11 @@
   function shouldBlockOpen(raw) {
     if (raw == null) return false;
     var s = String(raw).trim();
-    if (!s || s.charAt(0) === "#" || /^(about:|javascript:|blob:|data:)/i.test(s)) {
+    if (
+      !s ||
+      s.charAt(0) === "#" ||
+      /^(about:|javascript:|blob:|data:)/i.test(s)
+    ) {
       return false;
     }
     if (isAd(s)) return true;
@@ -67,7 +118,9 @@
     return true; // any other outside destination = pop-up ad
   }
   function log(what, url) {
-    try { console.info("[FWTV adblock] blocked " + what + ":", url); } catch (e) {}
+    try {
+      console.info("[FWTV adblock] blocked " + what + ":", url);
+    } catch (e) {}
   }
 
   // --- 1. Neuter ad scripts / iframes before they load -----------------------
@@ -80,9 +133,12 @@
         enumerable: desc.enumerable,
         get: desc.get,
         set: function (v) {
-          if (isAd(v)) { log(prop, v); return; }
+          if (isAd(v)) {
+            log(prop, v);
+            return;
+          }
           return desc.set.call(this, v);
-        }
+        },
       });
     } catch (e) {}
   }
@@ -92,9 +148,12 @@
   var origSetAttribute = Element.prototype.setAttribute;
   Element.prototype.setAttribute = function (name, value) {
     var n = String(name).toLowerCase();
-    if (n === "src" &&
-        (this instanceof HTMLScriptElement || this instanceof HTMLIFrameElement) &&
-        isAd(value)) {
+    if (
+      n === "src" &&
+      (this instanceof HTMLScriptElement ||
+        this instanceof HTMLIFrameElement) &&
+      isAd(value)
+    ) {
       log("attr", value);
       return;
     }
@@ -104,7 +163,10 @@
   function sweep(node) {
     if (!node || node.nodeType !== 1) return;
     var tag = node.tagName;
-    if ((tag === "SCRIPT" || tag === "IFRAME") && isAd(node.getAttribute("src"))) {
+    if (
+      (tag === "SCRIPT" || tag === "IFRAME") &&
+      isAd(node.getAttribute("src"))
+    ) {
       node.remove();
       return;
     }
@@ -116,8 +178,13 @@
   }
   try {
     new MutationObserver(function (muts) {
-      muts.forEach(function (m) { m.addedNodes.forEach(sweep); });
-    }).observe(document.documentElement || document, { childList: true, subtree: true });
+      muts.forEach(function (m) {
+        m.addedNodes.forEach(sweep);
+      });
+    }).observe(document.documentElement || document, {
+      childList: true,
+      subtree: true,
+    });
   } catch (e) {}
 
   // --- 2. Block pop-up windows to outside sites -------------------------------
@@ -131,18 +198,23 @@
       blur: function () {},
       postMessage: function () {},
       document: { write: function () {}, close: function () {} },
-      location: { href: "", replace: function () {}, assign: function () {} }
+      location: { href: "", replace: function () {}, assign: function () {} },
     };
   }
   function wrapOpen() {
     var current = window.open;
     if (current && current.__fwtv) return;
     var wrapped = function (url) {
-      if (shouldBlockOpen(url)) { log("window.open", url); return fakeWindow(); }
+      if (shouldBlockOpen(url)) {
+        log("window.open", url);
+        return fakeWindow();
+      }
       return current.apply(window, arguments);
     };
     wrapped.__fwtv = true;
-    try { window.open = wrapped; } catch (e) {}
+    try {
+      window.open = wrapped;
+    } catch (e) {}
   }
   wrapOpen();
   // Pake re-wraps window.open on DOMContentLoaded; wrap again on top of it.
@@ -169,20 +241,28 @@
 
   // Links that embedded players forward to the main window.
   if (window === window.top) {
-    window.addEventListener("message", function (e) {
-      var d = e.data;
-      if (d && d.type === "pake:frame-external-link" && shouldBlockOpen(d.url)) {
-        e.stopImmediatePropagation();
-        log("frame link", d.url);
-      }
-    }, true);
+    window.addEventListener(
+      "message",
+      function (e) {
+        var d = e.data;
+        if (
+          d &&
+          d.type === "pake:frame-external-link" &&
+          shouldBlockOpen(d.url)
+        ) {
+          e.stopImmediatePropagation();
+          log("frame link", d.url);
+        }
+      },
+      true,
+    );
   }
 
   // --- 3. Hide leftover ad containers ----------------------------------------
   var css =
-    "iframe[src*=\"al5sm\"],iframe[src*=\"adsterra\"],iframe[src*=\"popads\"]," +
-    "iframe[src*=\"doubleclick\"],iframe[src*=\"googlesyndication\"]," +
-    "ins.adsbygoogle,[id^=\"google_ads\"]" +
+    'iframe[src*="al5sm"],iframe[src*="adsterra"],iframe[src*="popads"],' +
+    'iframe[src*="doubleclick"],iframe[src*="googlesyndication"],' +
+    'ins.adsbygoogle,[id^="google_ads"]' +
     "{display:none!important;visibility:hidden!important}";
   function addCss() {
     try {
